@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Leur / Leurs</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --accent: #3b82f6;
+    --success: #22c55e;
+    --error: #ef4444;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 1rem;
+  }
+  .container { max-width: 700px; margin: 0 auto; }
+  header { text-align: center; padding: 1.2rem 0; }
+  header h1 { font-size: 1.6rem; }
+  header p { color: var(--muted); margin-top: 0.3rem; }
+
+  .phrase-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem;
+    margin-bottom: 0.9rem;
+  }
+  .phrase {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin-bottom: 0.6rem;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: #334155;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    color: var(--text);
+    font-size: 1rem;
+  }
+  input[type="text"]:focus { outline: none; border-color: var(--accent); }
+  input.correct { border-color: var(--success); background: #16653433; }
+  input.wrong { border-color: var(--error); background: #7f1d1d33; }
+
+  .result-text {
+    font-size: 0.9rem;
+    margin-top: 0.4rem;
+    min-height: 1.2em;
+  }
+  .result-text.ok { color: var(--success); }
+  .result-text.ko { color: var(--error); }
+
+  .btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.9rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 0.5rem;
+    cursor: pointer;
+  }
+  .btn:hover { background: #2563eb; }
+  .btn-secondary { background: #334155; margin-top: 0.6rem; }
+
+  .score {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 1rem 0;
+  }
+  .score span { color: var(--accent); }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Quiz Leur / Leurs</h1>
+    <p>Écris <strong>leur</strong> ou <strong>leurs</strong></p>
+  </header>
+
+  <div id="quiz"></div>
+
+  <button class="btn" id="checkBtn">Vérifier les réponses</button>
+  <button class="btn btn-secondary hidden" id="resetBtn">Recommencer</button>
+
+  <div id="scoreBox" class="hidden">
+    <div class="score">Score : <span id="score"></span></div>
+  </div>
+</div>
+
+<script>
+const phrases = [
+  // leur (singulier)
+  { text: "Ils ont oublié ___ sac à l’école.", answer: "leur" },
+  { text: "Elle a rangé ___ chambre.", answer: "leur" },
+  { text: "Ils regardent ___ professeur.", answer: "leur" },
+  { text: "Les enfants aiment ___ grand-mère.", answer: "leur" },
+  { text: "Ils ont perdu ___ clé.", answer: "leur" },
+  { text: "Elle aide ___ frère.", answer: "leur" },
+  { text: "Ils préparent ___ exposé.", answer: "leur" },
+  { text: "Les élèves ouvrent ___ livre.", answer: "leur" },
+  { text: "Ils cherchent ___ stylo.", answer: "leur" },
+  { text: "Elle connaît ___ adresse.", answer: "leur" },
+  { text: "Ils mangent ___ goûter.", answer: "leur" },
+  { text: "Les sportifs portent ___ maillot.", answer: "leur" },
+  { text: "Ils ferment ___ porte.", answer: "leur" },
+  { text: "Elle corrige ___ exercice.", answer: "leur" },
+  { text: "Ils écoutent ___ musique.", answer: "leur" },
+  { text: "Les touristes visitent ___ hôtel.", answer: "leur" },
+  { text: "Ils attendent ___ bus.", answer: "leur" },
+  { text: "Elle lave ___ voiture.", answer: "leur" },
+  { text: "Ils écrivent ___ nom.", answer: "leur" },
+  { text: "Les enfants prennent ___ douche.", answer: "leur" },
+  { text: "Ils ont fini ___ devoir.", answer: "leur" },
+  { text: "Elle regarde ___ photo.", answer: "leur" },
+  { text: "Ils aiment ___ ville.", answer: "leur" },
+  { text: "Les joueurs ont gagné ___ match.", answer: "leur" },
+  { text: "Ils ont rangé ___ bureau.", answer: "leur" },
+
+  // leurs (pluriel)
+  { text: "Ils ont oublié ___ sacs à l’école.", answer: "leurs" },
+  { text: "Elle a rangé ___ chambres.", answer: "leurs" },
+  { text: "Ils regardent ___ professeurs.", answer: "leurs" },
+  { text: "Les enfants aiment ___ grands-parents.", answer: "leurs" },
+  { text: "Ils ont perdu ___ clés.", answer: "leurs" },
+  { text: "Elle aide ___ frères.", answer: "leurs" },
+  { text: "Ils préparent ___ exposés.", answer: "leurs" },
+  { text: "Les élèves ouvrent ___ livres.", answer: "leurs" },
+  { text: "Ils cherchent ___ stylos.", answer: "leurs" },
+  { text: "Elle connaît ___ adresses.", answer: "leurs" },
+  { text: "Ils mangent ___ goûters.", answer: "leurs" },
+  { text: "Les sportifs portent ___ maillots.", answer: "leurs" },
+  { text: "Ils ferment ___ portes.", answer: "leurs" },
+  { text: "Elle corrige ___ exercices.", answer: "leurs" },
+  { text: "Ils écoutent ___ musiques.", answer: "leurs" },
+  { text: "Les touristes visitent ___ hôtels.", answer: "leurs" },
+  { text: "Ils attendent ___ bus.", answer: "leurs" },
+  { text: "Elle lave ___ voitures.", answer: "leurs" },
+  { text: "Ils écrivent ___ noms.", answer: "leurs" },
+  { text: "Les enfants prennent ___ douches.", answer: "leurs" },
+  { text: "Ils ont fini ___ devoirs.", answer: "leurs" },
+  { text: "Elle regarde ___ photos.", answer: "leurs" },
+  { text: "Ils aiment ___ villes.", answer: "leurs" },
+  { text: "Les joueurs ont gagné ___ matchs.", answer: "leurs" },
+  { text: "Ils ont rangé ___ bureaux.", answer: "leurs" }
+];
+
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+let current = [];
+
+function pickRandom() {
+  const shuffled = shuffle([...phrases]);
+  return shuffled.slice(0, 8);
+}
+
+function render() {
+  current = pickRandom();
+  const quiz = document.getElementById("quiz");
+  quiz.innerHTML = "";
+  current.forEach((item, i) => {
+    const card = document.createElement("div");
+    card.className = "phrase-card";
+    card.innerHTML = `
+      <div class="phrase">${item.text}</div>
+      <input type="text" data-index="${i}" placeholder="leur ou leurs" autocomplete="off">
+      <div class="result-text" id="res-${i}"></div>
+    `;
+    quiz.appendChild(card);
+  });
+}
+
+function normalize(str) {
+  return str.trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+document.getElementById("checkBtn").addEventListener("click", () => {
+  let score = 0;
+  const inputs = document.querySelectorAll("input[type=text]");
+  inputs.forEach(input => {
+    const i = input.dataset.index;
+    const user = normalize(input.value);
+    const correct = normalize(current[i].answer);
+    const res = document.getElementById(`res-${i}`);
+    input.disabled = true;
+
+    if (user === correct) {
+      input.classList.add("correct");
+      res.textContent = "Correct !";
+      res.className = "result-text ok";
+      score++;
+    } else {
+      input.classList.add("wrong");
+      res.textContent = `Correct : ${current[i].answer}`;
+      res.className = "result-text ko";
+    }
+  });
+
+  document.getElementById("score").textContent = `${score} / 8`;
+  document.getElementById("scoreBox").classList.remove("hidden");
+  document.getElementById("checkBtn").classList.add("hidden");
+  document.getElementById("resetBtn").classList.remove("hidden");
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  document.getElementById("scoreBox").classList.add("hidden");
+  document.getElementById("checkBtn").classList.remove("hidden");
+  document.getElementById("resetBtn").classList.add("hidden");
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
